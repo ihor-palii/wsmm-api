@@ -1,16 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:commerce-cloud-dataapi="http://www.mulesoft.org/schema/mule/commerce-cloud-dataapi" xmlns:salesforce-system-api="http://www.mulesoft.org/schema/mule/salesforce-system-api"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/salesforce-system-api http://www.mulesoft.org/schema/mule/salesforce-system-api/current/mule-salesforce-system-api.xsd
+http://www.mulesoft.org/schema/mule/commerce-cloud-dataapi http://www.mulesoft.org/schema/mule/commerce-cloud-dataapi/current/mule-commerce-cloud-dataapi.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="03ef7822-9695-4a9f-be51-f05456753193" >
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="07c51403-38b1-4228-97c9-379cf1c1dd32" >
+		<salesforce:basic-connection username="${SALESFORCE_USERNAME}" password="${SALESFORCE_PASSWORD}" securityToken="${SALESFORCE_SECURITY_TOKEN}" />
+	</salesforce:sfdc-config>
 	<flow name="wsmmFlow" doc:id="216836db-8ba7-43d6-a408-226575f1c6fe" >
 		<http:listener doc:name="Listener" doc:id="bb874d1f-9177-4752-988b-7df8742bf5e6" config-ref="HTTP_Listener_config" path="/"/>
 		<set-payload doc:name="Set Payload" doc:id="1ba9c600-da93-4fee-9673-22b9cb37138b" value="Hello from WSMM"/>
+	
+</flow>
+	<flow name="wsmmSalesforceIntegration" doc:id="0a54523b-aaa7-4798-b5a0-69dc57a6fd26" >
+		<http:listener doc:name="Listener" doc:id="eec404e1-0027-4894-b4fc-a057bf43ba47" config-ref="HTTP_Listener_config" path="/salesforce"/>
+		<salesforce:query doc:name="Query" doc:id="1b2b58b9-ebae-47a6-86cb-7d5fb8375f85" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT Name, Industry, Phone FROM Account]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="d7c4f43b-1152-4263-a8a1-34dcf949227f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	industry: payload01.Industry default "",
+	phone: payload01.Phone default "",
+	name: payload01.Name default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="02f83dd3-a919-43a3-9db1-e3f12edec2a5" />
 	</flow>
+
 </mule>
