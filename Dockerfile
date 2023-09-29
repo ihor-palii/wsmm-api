@@ -16,9 +16,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Project dependency
-ENV MAVEN_VERSION 3.5.4 \
-    MAVEN_HOME /usr/lib/mvn \
-    PATH $MAVEN_HOME/bin:$PATH
+ENV MAVEN_VERSION 3.5.4
+ENV MAVEN_HOME /usr/lib/mvn
+ENV PATH $MAVEN_HOME/bin:$PATH
 RUN wget http://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
   tar -zxvf apache-maven-$MAVEN_VERSION-bin.tar.gz && \
   rm apache-maven-$MAVEN_VERSION-bin.tar.gz && \
@@ -51,12 +51,13 @@ RUN cd ${MULE_HOME}/source && \
 # Define working directory.
 WORKDIR ${MULE_HOME}
 
-CMD [ "/opt/mule/bin/mule"]
-# CMD ["tail", "-f", "/dev/null"]
-
+# Set Mule App Environment variables
 ENV SALESFORCE_USERNAME="" \
     SALESFORCE_PASSWORD="" \
     SALESFORCE_SECURITY_TOKEN=""
+
+CMD [ "/opt/mule/bin/mule"]
+# CMD ["tail", "-f", "/dev/null"]
 
 # Default http port
 EXPOSE 8081
